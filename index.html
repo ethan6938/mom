@@ -512,7 +512,7 @@
     const saveEditBtn = document.getElementById("saveEditBtn");
     const cancelEditBtn = document.getElementById("cancelEditBtn");
 
-    let currentEditIndex = true;
+    let currentEditIndex = null;
 
     function escapeHtml(text) {
       const div = document.createElement("div");
@@ -561,7 +561,7 @@
       if (comments.length === 0) {
         commentsGrid.innerHTML = `
           <div class="empty-comments">
-            No birthday messages yet. <strong></strong>
+            No birthday messages yet.
           </div>
         `;
         return;
