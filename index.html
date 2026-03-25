@@ -208,9 +208,20 @@
       font-size: 17px;
     }
 
-    .rose { background: #fff1f2; border-color: #ffe4e6; }
-    .amber { background: #fffbeb; border-color: #fef3c7; }
-    .sky { background: #f0f9ff; border-color: #e0f2fe; }
+    .rose {
+      background: #fff1f2;
+      border-color: #ffe4e6;
+    }
+
+    .amber {
+      background: #fffbeb;
+      border-color: #fef3c7;
+    }
+
+    .sky {
+      background: #f0f9ff;
+      border-color: #e0f2fe;
+    }
 
     .icon {
       font-size: 42px;
@@ -416,6 +427,7 @@
         </p>
         <div class="buttons">
           <a href="#message" class="btn btn-primary">Read Your Message</a>
+          <a href="https://mom-comment.vercel.app/" class="btn btn-secondary">Leave a Comment</a>
         </div>
       </div>
 
@@ -501,8 +513,31 @@
     </div>
   </div>
 
-  <script>
-    const STORAGE_KEY = "momBirthdayComments";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      onSnapshot,
+      query,
+      orderBy,
+      doc,
+      updateDoc,
+      deleteDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
     const commentsGrid = document.getElementById("commentsGrid");
     const cardClasses = ["rose", "amber", "sky"];
 
@@ -512,57 +547,38 @@
     const saveEditBtn = document.getElementById("saveEditBtn");
     const cancelEditBtn = document.getElementById("cancelEditBtn");
 
-    let currentEditIndex = null;
+    let currentEditId = null;
+    let commentsCache = [];
 
     function escapeHtml(text) {
       const div = document.createElement("div");
-      div.textContent = text;
+      div.textContent = text || "";
       return div.innerHTML;
     }
 
-    function getComments() {
-  try {
-    const savedComments = localStorage.getItem(STORAGE_KEY);
-    return savedComments ? JSON.parse(savedComments) : [];
-  } catch (error) {
-    return [];
-  }
-}
+    function openEditModal(id) {
+      const comment = commentsCache.find(item => item.id === id);
+      if (!comment || !editModal) return;
 
-    function saveComments(comments) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
-    }
-
-    function openEditModal(index) {
-      const comments = getComments();
-      const comment = comments[index];
-      if (!comment || !editModal || !editName || !editMessage) return;
-
-      currentEditIndex = index;
-      editName.value = comment.name;
-      editMessage.value = comment.message;
+      currentEditId = id;
+      editName.value = comment.name || "";
+      editMessage.value = comment.message || "";
       editModal.classList.add("active");
     }
 
     function closeEditModal() {
-      if (!editModal) return;
+      currentEditId = null;
       editModal.classList.remove("active");
-      currentEditIndex = null;
     }
 
-    function deleteComment(index) {
-      const comments = getComments();
-      comments.splice(index, 1);
-      saveComments(comments);
-      renderCommentsOnMainPage();
+    async function deleteCommentById(id) {
+      await deleteDoc(doc(db, "birthdayComments", id));
     }
 
-    function renderCommentsOnMainPage() {
+    function renderComments(comments) {
       if (!commentsGrid) return;
 
-      const comments = getComments();
-
-      if (comments.length === 0) {
+      if (!comments.length) {
         commentsGrid.innerHTML = `
           <div class="empty-comments">
             No birthday messages yet.
@@ -571,43 +587,54 @@
         return;
       }
 
-      const newestFirst = comments
-        .map((comment, originalIndex) => ({ comment, originalIndex }))
-        .reverse();
-
-      commentsGrid.innerHTML = newestFirst.map((item, index) => {
+      commentsGrid.innerHTML = comments.map((item, index) => {
         const colorClass = cardClasses[index % cardClasses.length];
+        const createdAt = item.createdAt?.toDate
+          ? item.createdAt.toDate().toLocaleString()
+          : "";
+
         return `
           <div class="wish-card comment-card ${colorClass}">
             <div class="icon">💌</div>
-            <div class="comment-name">${escapeHtml(item.comment.name)}</div>
-            <div class="comment-text">${escapeHtml(item.comment.message)}</div>
-            <div class="comment-date">${escapeHtml(item.comment.date)}</div>
+            <div class="comment-name">${escapeHtml(item.name)}</div>
+            <div class="comment-text">${escapeHtml(item.message)}</div>
+            <div class="comment-date">${escapeHtml(createdAt)}</div>
             <div class="comment-actions">
-              <button class="comment-btn edit-btn" onclick="openEditModal(${item.originalIndex})">Edit</button>
-              <button class="comment-btn delete-btn" onclick="deleteComment(${item.originalIndex})">Delete</button>
+              <button class="comment-btn edit-btn" onclick="window.openEditModal('${item.id}')">Edit</button>
+              <button class="comment-btn delete-btn" onclick="window.deleteCommentById('${item.id}')">Delete</button>
             </div>
           </div>
         `;
       }).join("");
     }
 
+    const commentsQuery = query(
+      collection(db, "birthdayComments"),
+      orderBy("createdAt", "desc")
+    );
+
+    onSnapshot(commentsQuery, (snapshot) => {
+      commentsCache = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }));
+      renderComments(commentsCache);
+    });
+
     if (saveEditBtn) {
-      saveEditBtn.addEventListener("click", function() {
-        if (currentEditIndex === null || !editName || !editMessage) return;
+      saveEditBtn.addEventListener("click", async function () {
+        if (!currentEditId) return;
 
         const updatedName = editName.value.trim();
         const updatedMessage = editMessage.value.trim();
 
         if (!updatedName || !updatedMessage) return;
 
-        const comments = getComments();
-        comments[currentEditIndex].name = updatedName;
-        comments[currentEditIndex].message = updatedMessage;
-        comments[currentEditIndex].date = "Edited: " + new Date().toLocaleString();
+        await updateDoc(doc(db, "birthdayComments", currentEditId), {
+          name: updatedName,
+          message: updatedMessage
+        });
 
-        saveComments(comments);
-        renderCommentsOnMainPage();
         closeEditModal();
       });
     }
@@ -617,17 +644,15 @@
     }
 
     if (editModal) {
-      editModal.addEventListener("click", function(e) {
+      editModal.addEventListener("click", function (e) {
         if (e.target === editModal) {
           closeEditModal();
         }
       });
     }
 
-    renderCommentsOnMainPage();
-
     window.openEditModal = openEditModal;
-    window.deleteComment = deleteComment;
+    window.deleteCommentById = deleteCommentById;
   </script>
 </body>
 </html>
