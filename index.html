@@ -521,9 +521,13 @@
     }
 
     function getComments() {
-      const savedComments = localStorage.getItem(STORAGE_KEY);
-      return savedComments ? JSON.parse(savedComments) : [];
-    }
+  try {
+    const savedComments = localStorage.getItem(STORAGE_KEY);
+    return savedComments ? JSON.parse(savedComments) : [];
+  } catch (error) {
+    return [];
+  }
+}
 
     function saveComments(comments) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
