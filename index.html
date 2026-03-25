@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -209,20 +208,9 @@
       font-size: 17px;
     }
 
-    .rose {
-      background: #fff1f2;
-      border-color: #ffe4e6;
-    }
-
-    .amber {
-      background: #fffbeb;
-      border-color: #fef3c7;
-    }
-
-    .sky {
-      background: #f0f9ff;
-      border-color: #e0f2fe;
-    }
+    .rose { background: #fff1f2; border-color: #ffe4e6; }
+    .amber { background: #fffbeb; border-color: #fef3c7; }
+    .sky { background: #f0f9ff; border-color: #e0f2fe; }
 
     .icon {
       font-size: 42px;
@@ -389,7 +377,6 @@
     }
 
     @media (max-width: 900px) {
-
       .hero-grid,
       .grid-3 {
         grid-template-columns: 1fr;
@@ -418,7 +405,6 @@
     }
   </style>
 </head>
-
 <body>
   <section class="hero">
     <div class="container hero-grid">
@@ -426,8 +412,7 @@
         <span class="badge">Made with love for Mom</span>
         <h1>Happy Birthday, Mom</h1>
         <p>
-          Today is all about celebrating your beautiful heart, your strength, and the love you bring to everyone around
-          you. Since you love elephants, this little page is made especially for you.
+          Today is all about celebrating your beautiful heart, your strength, and the love you bring to everyone around you. Since you love elephants, this little page is made especially for you.
         </p>
         <div class="buttons">
           <a href="#message" class="btn btn-primary">Read Your Message</a>
@@ -454,9 +439,7 @@
       <div class="message-box">
         <h2>A Special Message for You</h2>
         <p>
-          Mom, thank you for your endless love, your warmth, and the way you always make life brighter. You are one of
-          the most important people in my life, and I hope this birthday brings you as much joy as you bring to everyone
-          else. May your year ahead be filled with peace, laughter, beautiful moments, and all the love you deserve.
+          Mom, thank you for your endless love, your warmth, and the way you always make life brighter. You are one of the most important people in my life, and I hope this birthday brings you as much joy as you bring to everyone else. May your year ahead be filled with peace, laughter, beautiful moments, and all the love you deserve.
         </p>
       </div>
     </div>
@@ -518,47 +501,8 @@
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      onSnapshot,
-      query,
-      orderBy,
-      doc,
-      updateDoc,
-      deleteDoc,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    window.firebaseDb = db;
-    window.firebaseFns = {
-      collection,
-      addDoc,
-      onSnapshot,
-      query,
-      orderBy,
-      doc,
-      updateDoc,
-      deleteDoc,
-      serverTimestamp
-    };
-  </script>
-
+  
 
   <script>
     const STORAGE_KEY = "momBirthdayComments";
@@ -580,13 +524,13 @@
     }
 
     function getComments() {
-      try {
-        const savedComments = localStorage.getItem(STORAGE_KEY);
-        return savedComments ? JSON.parse(savedComments) : [];
-      } catch (error) {
-        return [];
-      }
-    }
+  try {
+    const savedComments = localStorage.getItem(STORAGE_KEY);
+    return savedComments ? JSON.parse(savedComments) : [];
+  } catch (error) {
+    return [];
+  }
+}
 
     function saveComments(comments) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
@@ -652,7 +596,7 @@
     }
 
     if (saveEditBtn) {
-      saveEditBtn.addEventListener("click", function () {
+      saveEditBtn.addEventListener("click", function() {
         if (currentEditIndex === null || !editName || !editMessage) return;
 
         const updatedName = editName.value.trim();
@@ -676,7 +620,7 @@
     }
 
     if (editModal) {
-      editModal.addEventListener("click", function (e) {
+      editModal.addEventListener("click", function(e) {
         if (e.target === editModal) {
           closeEditModal();
         }
@@ -689,5 +633,4 @@
     window.deleteComment = deleteComment;
   </script>
 </body>
-
 </html>
