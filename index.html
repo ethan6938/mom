@@ -451,171 +451,42 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "momBirthdayComments";
-    const commentsGrid = document.getElementById("commentsGrid");
-    const cardClasses = ["rose", "amber", "sky"];
+  const commentsGrid = document.getElementById("commentsGrid");
+  const cardClasses = ["rose", "amber", "sky"];
 
-    const birthdayForm = document.getElementById("birthdayForm");
-    const commentName = document.getElementById("commentName");
-    const commentMessage = document.getElementById("commentMessage");
-    const savedNote = document.getElementById("savedNote");
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text || "";
+    return div.innerHTML;
+  }
 
-    const editModal = document.getElementById("editModal");
-    const editName = document.getElementById("editName");
-    const editMessage = document.getElementById("editMessage");
-    const saveEditBtn = document.getElementById("saveEditBtn");
-    const cancelEditBtn = document.getElementById("cancelEditBtn");
+  async function loadComments() {
+    try {
+      const res = await fetch("/api/comments");
+      const comments = await res.json();
 
-    let currentEditIndex = null;
-
-    function escapeHtml(text) {
-      const div = document.createElement("div");
-      div.textContent = text || "";
-      return div.innerHTML;
-    }
-
-    function getComments() {
-      try {
-        const savedComments = localStorage.getItem(STORAGE_KEY);
-        return savedComments ? JSON.parse(savedComments) : [];
-      } catch (error) {
-        console.error("Could not read comments from storage:", error);
-        return [];
-      }
-    }
-
-    function saveComments(comments) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
-        return true;
-      } catch (error) {
-        console.error("Could not save comments to storage:", error);
-        return false;
-      }
-    }
-
-    function renderCommentsOnMainPage() {
-      if (!commentsGrid) return;
-
-      const comments = getComments();
-
-      if (!Array.isArray(comments) || comments.length === 0) {
-        commentsGrid.innerHTML = `
-          <div class="empty-comments">No birthday messages yet.</div>
-        `;
+      if (!comments.length) {
+        commentsGrid.innerHTML = `<div class="empty-comments">No birthday messages yet.</div>`;
         return;
       }
 
-      const newestFirst = comments
-        .map((comment, originalIndex) => ({ comment, originalIndex }))
-        .reverse();
-
-      commentsGrid.innerHTML = newestFirst.map((item, index) => {
+      commentsGrid.innerHTML = comments.map((comment, index) => {
         const colorClass = cardClasses[index % cardClasses.length];
+
         return `
           <div class="wish-card comment-card ${colorClass}">
             <div class="icon">💌</div>
-            <div class="comment-name">${escapeHtml(item.comment.name)}</div>
-            <div class="comment-text">${escapeHtml(item.comment.message)}</div>
-            <div class="comment-date">${escapeHtml(item.comment.date)}</div>
-            <div class="comment-actions">
-              <button class="comment-btn edit-btn" onclick="openEditModal(${item.originalIndex})">Edit</button>
-              <button class="comment-btn delete-btn" onclick="deleteComment(${item.originalIndex})">Delete</button>
-            </div>
+            <div class="comment-name">${escapeHtml(comment.name)}</div>
+            <div class="comment-text">${escapeHtml(comment.message)}</div>
+            <div class="comment-date">${new Date(comment.createdAt).toLocaleString()}</div>
           </div>
         `;
       }).join("");
+    } catch (error) {
+      console.error(error);
+      commentsGrid.innerHTML = `<div class="empty-comments">Could not load comments.</div>`;
     }
+  }
 
-    function openEditModal(index) {
-      const comments = getComments();
-      const comment = comments[index];
-      if (!comment) return;
-
-      currentEditIndex = index;
-      editName.value = comment.name || "";
-      editMessage.value = comment.message || "";
-      editModal.classList.add("active");
-    }
-
-    function closeEditModal() {
-      editModal.classList.remove("active");
-      currentEditIndex = null;
-    }
-
-    function deleteComment(index) {
-      const comments = getComments();
-      comments.splice(index, 1);
-      saveComments(comments);
-      renderCommentsOnMainPage();
-    }
-
-    if (birthdayForm) {
-      birthdayForm.addEventListener("submit", function(e) {
-        e.preventDefault();
-
-        const name = commentName.value.trim();
-        const message = commentMessage.value.trim();
-
-        if (!name || !message) return;
-
-        const comments = getComments();
-        comments.push({
-          name: name,
-          message: message,
-          date: new Date().toLocaleString()
-        });
-
-        saveComments(comments);
-        birthdayForm.reset();
-        savedNote.classList.add("show");
-        renderCommentsOnMainPage();
-
-        setTimeout(() => {
-          savedNote.classList.remove("show");
-        }, 2000);
-      });
-    }
-
-    if (saveEditBtn) {
-      saveEditBtn.addEventListener("click", function() {
-        if (currentEditIndex === null) return;
-
-        const updatedName = editName.value.trim();
-        const updatedMessage = editMessage.value.trim();
-        if (!updatedName || !updatedMessage) return;
-
-        const comments = getComments();
-        if (!comments[currentEditIndex]) return;
-
-        comments[currentEditIndex].name = updatedName;
-        comments[currentEditIndex].message = updatedMessage;
-        comments[currentEditIndex].date = "Edited: " + new Date().toLocaleString();
-
-        saveComments(comments);
-        renderCommentsOnMainPage();
-        closeEditModal();
-      });
-    }
-
-    if (cancelEditBtn) {
-      cancelEditBtn.addEventListener("click", closeEditModal);
-    }
-
-    if (editModal) {
-      editModal.addEventListener("click", function(e) {
-        if (e.target === editModal) closeEditModal();
-      });
-    }
-
-    window.openEditModal = openEditModal;
-    window.deleteComment = deleteComment;
-
-    try {
-      renderCommentsOnMainPage();
-    } catch (e) {
-      console.error("Birthday comments render failed:", e);
-    }
-  </script>
-</body>
-</html>
+  loadComments();
+</script>
