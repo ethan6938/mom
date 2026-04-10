@@ -85,6 +85,7 @@
       transition: 0.2s ease;
       border: none;
       cursor: pointer;
+      text-align: center;
     }
 
     .btn-primary {
@@ -150,7 +151,7 @@
 
     .section { padding: 70px 0; }
 
-    .message-box, .form-box {
+    .message-box {
       background: white;
       border-radius: 32px;
       padding: 48px;
@@ -159,7 +160,7 @@
       text-align: center;
     }
 
-    .message-box h2, .form-box h2 {
+    .message-box h2 {
       font-size: 42px;
       margin-bottom: 28px;
     }
@@ -222,25 +223,6 @@
       margin-bottom: 16px;
     }
 
-    .comment-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-
-    .comment-btn {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .edit-btn { background: #f59e0b; color: white; }
-    .delete-btn { background: #dc2626; color: white; }
-
     .empty-comments {
       grid-column: 1 / -1;
       background: white;
@@ -250,77 +232,6 @@
       text-align: center;
       color: #78716c;
       font-size: 16px;
-    }
-
-    .birthday-form {
-      width: 100%;
-      max-width: 520px;
-      margin: 0 auto;
-      text-align: left;
-    }
-
-    .form-row { margin-bottom: 16px; }
-
-    input, textarea {
-      width: 100%;
-      display: block;
-      padding: 14px 16px;
-      border: 1px solid #e7e5e4;
-      border-radius: 18px;
-      font-size: 16px;
-      font-family: Arial, sans-serif;
-      color: #292524;
-      background: #fffdfd;
-      outline: none;
-    }
-
-    input:focus, textarea:focus {
-      border-color: #f43f5e;
-      box-shadow: 0 0 0 4px rgba(244,63,94,0.12);
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 120px;
-    }
-
-    .saved-note {
-      display: none;
-      margin-top: 18px;
-      text-align: center;
-      color: #15803d;
-      font-weight: bold;
-      font-size: 15px;
-    }
-
-    .saved-note.show { display: block; }
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 999;
-    }
-
-    .modal-overlay.active { display: flex; }
-
-    .modal {
-      width: 100%;
-      max-width: 600px;
-      background: white;
-      border-radius: 28px;
-      padding: 30px;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.2);
-    }
-
-    .modal h3 {
-      font-size: 28px;
-      margin-bottom: 20px;
-      color: #1c1917;
     }
 
     footer { padding: 0 0 50px; }
@@ -350,8 +261,8 @@
       .hero-grid, .grid-3 { grid-template-columns: 1fr; }
       h1 { font-size: 44px; }
       .elephant-box { min-height: 380px; }
-      .message-box, .form-box { padding: 32px 24px; }
-      .message-box h2, .form-box h2 { font-size: 32px; }
+      .message-box { padding: 32px 24px; }
+      .message-box h2 { font-size: 32px; }
       .message-box p, .hero p { font-size: 18px; }
     }
   </style>
@@ -367,6 +278,7 @@
         </p>
         <div class="buttons">
           <a href="#message" class="btn btn-primary">Read Your Message</a>
+          <a href="leave-message.html" class="btn btn-secondary">Leave a Message</a>
         </div>
       </div>
 
@@ -421,7 +333,9 @@
         <p style="font-size: 18px; color: #57534e;">Messages left for Mom will appear here.</p>
       </div>
 
-      <div class="grid-3" id="commentsGrid"></div>
+      <div class="grid-3" id="commentsGrid">
+        <div class="empty-comments">Loading birthday messages...</div>
+      </div>
     </div>
   </section>
 
@@ -434,59 +348,57 @@
     </div>
   </footer>
 
-  <div class="modal-overlay" id="editModal">
-    <div class="modal">
-      <h3>Edit Comment</h3>
-      <div class="form-row">
-        <input type="text" id="editName" placeholder="Your name">
-      </div>
-      <div class="form-row">
-        <textarea id="editMessage" placeholder="Your message"></textarea>
-      </div>
-      <div class="buttons">
-        <button class="btn save-btn" id="saveEditBtn">Save Changes</button>
-        <button class="btn cancel-btn" id="cancelEditBtn">Cancel</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-  const commentsGrid = document.getElementById("commentsGrid");
-  const cardClasses = ["rose", "amber", "sky"];
+    const commentsGrid = document.getElementById("commentsGrid");
+    const cardClasses = ["rose", "amber", "sky"];
 
-  function escapeHtml(text) {
-    const div = document.createElement("div");
-    div.textContent = text || "";
-    return div.innerHTML;
-  }
-
-  async function loadComments() {
-    try {
-      const res = await fetch("/api/comments");
-      const comments = await res.json();
-
-      if (!comments.length) {
-        commentsGrid.innerHTML = `<div class="empty-comments">No birthday messages yet.</div>`;
-        return;
-      }
-
-      commentsGrid.innerHTML = comments.map((comment, index) => {
-        const colorClass = cardClasses[index % cardClasses.length];
-
-        return `
-          <div class="wish-card comment-card ${colorClass}">
-            <div class="icon">💌</div>
-            <div class="comment-name">${escapeHtml(comment.name)}</div>
-            <div class="comment-text">${escapeHtml(comment.message)}</div>
-            <div class="comment-date">${new Date(comment.createdAt).toLocaleString()}</div>
-          </div>
-        `;
-      }).join("");
-    } catch (error) {
-      console.error(error);
-      commentsGrid.innerHTML = `<div class="empty-comments">Could not load comments.</div>`;
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text || "";
+      return div.innerHTML;
     }
-  }
 
-  loadComments();
-</script>
+    async function loadComments() {
+      try {
+        const res = await fetch("/api/comments");
+        const text = await res.text();
+
+        let comments = [];
+        try {
+          comments = text ? JSON.parse(text) : [];
+        } catch (err) {
+          console.error("Response was not JSON:", text);
+          throw new Error("Invalid response");
+        }
+
+        if (!res.ok) {
+          throw new Error("Could not load comments");
+        }
+
+        if (!comments.length) {
+          commentsGrid.innerHTML = `<div class="empty-comments">No birthday messages yet.</div>`;
+          return;
+        }
+
+        commentsGrid.innerHTML = comments.map((comment, index) => {
+          const colorClass = cardClasses[index % cardClasses.length];
+
+          return `
+            <div class="wish-card comment-card ${colorClass}">
+              <div class="icon">💌</div>
+              <div class="comment-name">${escapeHtml(comment.name)}</div>
+              <div class="comment-text">${escapeHtml(comment.message)}</div>
+              <div class="comment-date">${new Date(comment.createdAt).toLocaleString()}</div>
+            </div>
+          `;
+        }).join("");
+      } catch (error) {
+        console.error(error);
+        commentsGrid.innerHTML = `<div class="empty-comments">Could not load comments.</div>`;
+      }
+    }
+
+    loadComments();
+  </script>
+</body>
+</html>
