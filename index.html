@@ -633,7 +633,12 @@
       });
     }
 
+      try {
     renderCommentsOnMainPage();
+  } catch (e) {
+    console.error("Birthday comments render failed:", e);
+  }
+
 
     window.openEditModal = openEditModal;
     window.deleteComment = deleteComment;
